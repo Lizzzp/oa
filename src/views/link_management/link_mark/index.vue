@@ -31,20 +31,7 @@ const markForm = ref<Partial<LinkMarkType>>({
 const handleMarkConfirm = () => {
   console.log(markForm.value);
 };
-// const rules = {
-//   promotion_intensity: [
-//     {
-//       required: true,
-//       message: '请输入推广力度'
-//     }
-//   ],
-//   sales_rank: [
-//     {
-//       required: true,
-//       message: '请输入热销等级'
-//     }
-//   ]
-// };
+
 
 const handleSubmit = (values: typeof markForm.value) => {
   const keys = multipleSelection.value.map(i => i.id);

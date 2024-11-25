@@ -22,24 +22,32 @@ export type TotalType = {
     id: number;
   };
 }[];
-export const LinkMarkUrl = '/api/items/link_mark';
-export const queryLinkMark = async ({
-  filter,
-  limit,
-  sort,
-  page
-}: QueryParams) => {
+
+export type queryDataType = {
+  shop?: string;
+  conversion_rate_l?: number;
+  conversion_rate_h?: number;
+  sales_numbers?: number;
+  linkids?: string[];
+  begin_date?: string;
+  end_date?: string;
+  promotion_intensity?: string;
+  sales_rank?: string;
+  sales_volume?: number;
+  profit_rate_l?: number;
+  profit_rate_h?: number;
+  p_r_l?: number;
+  p_r_h?: number;
+} 
+
+
+export const LinkMarkUrl = '/db/link';
+export const queryLinkMark = async (filter: queryDataType) => {
   try {
     const { data } = await http.request<{
       data: LinkMarkType[];
-    }>('get', LinkMarkUrl, {
-      params: {
-        fields: '*,head.first_name,link_id.*',
-        filter,
-        limit,
-        sort,
-        page
-      }
+    }>('post', LinkMarkUrl, {
+      data: filter
     });
     return data;
   } catch (error) {
@@ -56,30 +64,7 @@ export const queryLinkMark = async ({
   }
 };
 
-export const queryLinkMarkTotal = async ({ filter }: QueryParams) => {
-  try {
-    const response = await http.request<{
-      data: TotalType;
-    }>('get', LinkMarkUrl, {
-      params: {
-        'aggregate[countDistinct]': 'id',
-        filter
-      }
-    });
-    return response.data[0].countDistinct.id;
-  } catch (error) {
-    let errorMessage = 'unknown!';
-    if (error instanceof AxiosError) {
-      errorMessage = error.message;
-    }
-    if (error instanceof Error) {
-      errorMessage = error.message;
-    }
-    return {
-      message: errorMessage
-    };
-  }
-};
+
 
 export const updateLinkMark = async (
   keys: string[],
