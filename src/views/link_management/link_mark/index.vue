@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import PureTable from '@pureadmin/table';
+import moment from "moment";
 import { ref } from 'vue';
 import { useColumns } from '@/views/link_management/link_mark/table';
 import 'plus-pro-components/es/components/search/style/css';
@@ -34,7 +35,7 @@ const handleMarkConfirm = () => {
 
 
 const handleSubmit = (values: typeof markForm.value) => {
-  const keys = multipleSelection.value.map(i => i.id);
+  const keys = multipleSelection.value.map(i => i.链接ID);
   updateLinkMark(keys, values).then(res => {
     if (res.message === 'success') {
       markShow.value = false;
@@ -139,11 +140,23 @@ const formColumns: PlusColumn[] = [
     }
   },
   {
+    label: '时间范围',
+    prop: 'date',
+    valueType: 'date-picker',
+    fieldProps: {
+      type: 'daterange',
+      valueFormat: 'YYYY-MM-DD',
+      startPlaceholder: '请选择开始时间',
+      endPlaceholder: '请选择结束时间',
+      dateFormat: 'YYYY-MM-DD'
+    }
+  },
+  {
     label: '店铺',
     prop: 'shop',
     valueType: 'input',
     fieldProps: {
-      placeholder: ''
+      placeholder: '',
     }
   },
   {
@@ -212,13 +225,71 @@ const formColumns: PlusColumn[] = [
         color: 'red'
       }
     ]
-  }
+  },
+  {
+    label: '最小转化率',
+    prop: 'conversion_rate_l',
+    valueType: 'input-number',
+    fieldProps: { precision: 2, step: 0.1},
+  },
+  {
+    label: '最大转化率',
+    prop: 'conversion_rate_h',
+    valueType: 'input-number',
+    fieldProps: { precision: 2, step: 0.1},
+  },
+  {
+    label: '最小销量',
+    prop: 'sales_numbers',
+    valueType: 'input-number',
+    fieldProps: {  step: 1,  min: 0 },
+  },
+  {
+    label: '最小利润率',
+    prop: 'profit_rate_l',
+    valueType: 'input-number',
+    fieldProps: { precision: 2, step: 0.1},
+  },
+  {
+    label: '最大利润率',
+    prop: 'profit_rate_h',
+    valueType: 'input-number',
+    fieldProps: { precision: 2, step: 0.1},
+  },
+  {
+    label: '最小推广费占比',
+    prop: 'p_r_l',
+    valueType: 'input-number',
+    fieldProps: { precision: 2, step: 0.1},
+  },
+  {
+    label: '最大推广费占比',
+    prop: 'p_r_h',
+    valueType: 'input-number',
+    fieldProps: { precision: 2, step: 0.1},
+  },
 ];
 const handleSelectionChange = val => {
   multipleSelection.value = val;
 };
 const handleReset = () => {
   pagination.currentPage = 1;
+  search.value =  {
+    shop: '',
+    conversion_rate_l: 0,
+    conversion_rate_h: 1,
+    sales_numbers: 0,
+    link_ids: [],
+    date: [moment().subtract(7, 'days').format("YYYY-MM-DD"), moment().format("YYYY-MM-DD")],
+    promotion_intensity: '',
+    sales_rank: '',
+    sales_volume: 0,
+    profit_rate_l: 0,
+    profit_rate_h: 1,
+    p_r_l: 0,
+    p_r_h: 1,
+  }
+
   queryAction();
 };
 </script>
@@ -239,8 +310,8 @@ const handleReset = () => {
       <PlusSearch
         v-model="search"
         :columns="formColumns"
-        :show-number="2"
-        label-width="80"
+        :show-number="3"
+        label-width="120"
         label-position="right"
         @search="queryAction"
         @reset="handleReset"
@@ -267,7 +338,7 @@ const handleReset = () => {
       confirm-text="确定"
       @confirm="
         () => {
-          search.link_ids = batchIds.split('\n').join(',');
+          search.link_ids = batchIds.split('\n');
           batchIds = '';
           batchShow = false;
         }
@@ -298,7 +369,6 @@ const handleReset = () => {
         v-model="markForm"
         label-width="120"
         :columns="markColumns"
-
         @submit="handleSubmit"
       />
     </PlusDialog>

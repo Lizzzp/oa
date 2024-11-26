@@ -1,6 +1,8 @@
 import { ref, onMounted, reactive } from 'vue';
 import type { PaginationProps, LoadingConfig } from '@pureadmin/table';
-import { queryDataType, queryLinkMark} from './action';
+import { queryDataType, queryLinkMark } from './action';
+import moment from 'moment';
+import { formatDate } from '@/views/utils/tools';
 
 export function useColumns() {
   const loading = ref(true);
@@ -21,6 +23,7 @@ export function useColumns() {
       label: '上架时间',
       prop: '创建时间',
       width: '200',
+      cellRenderer: ({ row }) => formatDate(row.创建时间)
     },
     {
       label: '主图',
@@ -57,7 +60,12 @@ export function useColumns() {
     },
     {
       label: '负责人',
-      prop: '负责人',
+      prop: 'head',
+      width: 'auto'
+    },
+    {
+      label: '销售件数',
+      prop: '销售件数',
       width: 'auto'
     },
     {
@@ -89,25 +97,28 @@ export function useColumns() {
       label: '转化率',
       prop: '转化率',
       width: 'auto'
-    },
+    }
   ];
-  const totalData = ref([])
+  const totalData = ref([]);
   const records = ref([]);
   const search = ref({
     shop: '',
-    conversion_rate_l: null,
-    conversion_rate_h: null,
-    sales_numbers: null,
-    linkids: [],
-    begin_date: '',
-    end_date: '',
+    conversion_rate_l: 0,
+    conversion_rate_h: 1,
+    sales_numbers: 0,
+    link_ids: [],
+    date: [
+      moment().subtract(7, 'days').format('YYYY-MM-DD'),
+      moment().format('YYYY-MM-DD')
+    ],
     promotion_intensity: '',
     sales_rank: '',
-    sales_volume: null,
-    profit_rate_l: null,
-    profit_rate_h: null,
-    p_r_l: null,
-    p_r_h: null,
+    sales_volume: 0,
+    profit_rate_l: 0,
+    profit_rate_h: 1,
+    p_r_l: 0,
+    p_r_h: 1,
+    head: ''
   });
   /** 分页配置 */
   const pagination = reactive<PaginationProps>({
@@ -132,81 +143,74 @@ export function useColumns() {
           L 15 15
         " style="stroke-width: 4px; fill: rgba(0, 0, 0, 0)"/>
       `
-    // svg: "",
-    // background: rgba()
   });
 
   async function onSizeChange() {
     pagination.currentPage = 1;
-    if (totalData instanceof Array) {
-      records.value = totalData.slice(pagination.currentPage, (pagination.currentPage + 1) * pagination.pageSize);
-    }
+    records.value = totalData.value.slice(
+      (pagination.currentPage - 1) * pagination.pageSize,
+      pagination.currentPage * pagination.pageSize
+    );
   }
 
   async function onCurrentChange() {
-    if (totalData instanceof Array) {
-      records.value = totalData.slice(pagination.currentPage, (pagination.currentPage + 1) * pagination.pageSize);
-    }
+    records.value = totalData.value.slice(
+      (pagination.currentPage - 1) * pagination.pageSize,
+      pagination.currentPage * pagination.pageSize
+    );
   }
 
   async function queryAction() {
     loadingConfig.text = `正在加载第${pagination.currentPage}页...`;
     loading.value = true;
     const filter: queryDataType = {};
-
+    console.log(search.value);
     if (search.value.shop) {
-      filter.shop = search.value.shop
+      filter.shop = search.value.shop;
     }
-    if (search.value.conversion_rate_h) {
-      filter.conversion_rate_h = search.value.conversion_rate_h
+    filter.conversion_rate_h = search.value.conversion_rate_h;
+    filter.conversion_rate_l = search.value.conversion_rate_l;
+    filter.sales_numbers = search.value.sales_numbers;
+    if (search.value.link_ids) {
+      if (
+        search.value.link_ids instanceof Array &&
+        search.value.link_ids.length
+      ) {
+        filter.linkids = search.value.link_ids;
+      } else if (typeof search.value.link_ids === 'string') {
+        filter.linkids = [search.value.link_ids];
+      }
     }
-    if (search.value.conversion_rate_l) {
-      filter.conversion_rate_h = search.value.conversion_rate_l
-    }
-    if (search.value.sales_numbers) {
-      filter.sales_numbers = search.value.sales_numbers
-    }
-    if (search.value.linkids.length) {
-      filter.linkids = search.value.linkids
-    }
-    if (search.value.begin_date) {
-      filter.begin_date = search.value.begin_date
-    }
-    if (search.value.end_date) {
-      filter.end_date = search.value.end_date
+    if (search.value.date) {
+      filter.begin_date = search.value.date[0];
+      filter.end_date = search.value.date[1];
     }
     if (search.value.promotion_intensity) {
-      filter.promotion_intensity = search.value.promotion_intensity
+      filter.promotion_intensity = search.value.promotion_intensity;
     }
     if (search.value.sales_rank) {
-      filter.sales_rank = search.value.sales_rank
+      filter.sales_rank = search.value.sales_rank;
     }
-    if (search.value.sales_volume) {
-      filter.sales_volume = search.value.sales_volume
+    filter.sales_volume = search.value.sales_volume;
+    filter.profit_rate_l = search.value.profit_rate_l;
+    filter.profit_rate_h = search.value.profit_rate_h;
+    filter.p_r_h = search.value.p_r_h;
+    filter.p_r_l = search.value.p_r_l;
+    if (search.value.head) {
+      filter.head = search.value.head;
     }
-    if (search.value.profit_rate_l) {
-      filter.profit_rate_l = search.value.profit_rate_l
-    }
-    if (search.value.profit_rate_h) {
-      filter.profit_rate_h = search.value.profit_rate_h
-    }
-    if (search.value.p_r_h) {
-      filter.p_r_h = search.value.p_r_h
-    }
-    if (search.value.p_r_l) {
-      filter.p_r_l = search.value.p_r_l
-    }
-    filter.begin_date = "2024-11-23",
-    filter.end_date= "2024-11-25"
 
     const data = await queryLinkMark(filter);
 
     const rowCount = (data as any[]).length;
 
     if (data instanceof Array) {
-      records.value = data.slice(pagination.currentPage, (pagination.currentPage + 1) * pagination.pageSize);
+      records.value = data.slice(
+        (pagination.currentPage - 1) * pagination.pageSize,
+        pagination.currentPage * pagination.pageSize
+      );
     }
-    totalData.value = (data as any[]);
+    totalData.value = data as any[];
     if (typeof rowCount === 'number') {
       pagination.total = rowCount;
     }

@@ -38,15 +38,16 @@ export type queryDataType = {
   profit_rate_h?: number;
   p_r_l?: number;
   p_r_h?: number;
+  head?: string;
 } 
 
 
-export const LinkMarkUrl = '/db/link';
+
 export const queryLinkMark = async (filter: queryDataType) => {
   try {
     const { data } = await http.request<{
       data: LinkMarkType[];
-    }>('post', LinkMarkUrl, {
+    }>('post', '/db/link/query', {
       data: filter
     });
     return data;
@@ -77,13 +78,18 @@ export const updateLinkMark = async (
         updateData[keysKey] = data[keysKey];
       }
     }
-    const responseData = await http.request<{
+    await await http.request<{
       data: LinkMarkType[];
-    }>('patch', LinkMarkUrl, {
+    }>('delete', '/api/items/link_mark', {
       data: {
-        data: updateData,
         keys
       }
+    });
+
+    const responseData = await http.request<{
+      data: LinkMarkType[];
+    }>('post', '/api/items/link_mark', {
+      data:  keys.map(k => ({...updateData, link_id: k}))
     });
     if (responseData.data.length === keys.length) {
       return {
